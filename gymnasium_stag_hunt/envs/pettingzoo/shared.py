@@ -1,6 +1,6 @@
 from pettingzoo.utils import wrappers
 from pettingzoo import ParallelEnv
-from pettingzoo.utils import agent_selector
+from pettingzoo.utils import AgentSelector
 import functools
 
 
@@ -31,7 +31,7 @@ class PettingZooEnv(ParallelEnv):
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
         self.agent_selection = None
-        self._agent_selector = agent_selector(self.agents)
+        self._agent_selector = AgentSelector(self.agents)
 
         self._action_spaces = {
             agent: self.env.action_space for agent in self.possible_agents
@@ -67,7 +67,7 @@ class PettingZooEnv(ParallelEnv):
     def close(self):
         self.env.close()
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
         self.agents = self.possible_agents[:]
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.next()
@@ -83,14 +83,15 @@ class PettingZooEnv(ParallelEnv):
         return self.current_observations
 
     def step(self, actions):
-        observations, rewards, env_done, info = self.env.step(list(actions.values()))
+        observations, rewards, env_terminated, env_truncated, info = self.env.step(list(actions.values()))
 
         obs = {self.agents[0]: observations[0], self.agents[1]: observations[1]}
         rewards = {self.agents[0]: rewards[0], self.agents[1]: rewards[1]}
-        dones = {agent: env_done for agent in self.agents}
+        terminates = {agent: env_terminated for agent in self.agents}
+        truncates = {agent: env_truncated for agent in self.agents}
         infos = {agent: {} for agent in self.agents}
 
-        return obs, rewards, dones, infos
+        return obs, rewards, terminates, truncates, infos
 
     def observe(self, agent):
         return self.current_observations[agent]

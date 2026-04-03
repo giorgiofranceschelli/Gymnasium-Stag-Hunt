@@ -18,32 +18,34 @@ If you end up using this in your work, please reference it with:
  ```
 ---
 # Minimal Example
+
 ```python
 import gym
-import gym_stag_hunt
+import gymnasium_stag_hunt
 import time
 
-env = gym.make("StagHunt-Hunt-v0", obs_type='image', ...) # you can pass config parameters here
+env = gym.make("StagHunt-Hunt-v0", obs_type='image', ...)  # you can pass config parameters here
 env.reset()
 for iteration in range(1000):
-  time.sleep(.2)
-  obs, rewards, done, info = env.step([env.action_space.sample(), env.action_space.sample()])
-  env.render()
+    time.sleep(.2)
+    obs, rewards, done, info = env.step([env.action_space.sample(), env.action_space.sample()])
+    env.render()
 env.close()
 ```
 
 # PettingZoo environment with Ray RLLib
 
 ```python
-import gym 
-import gym_stag_hunt
+import gym
+import gymnasium_stag_hunt
 from ray import tune
 from ray.rllib.env.wrappers.pettingzoo_env import PettingZooEnv
-from gym_stag_hunt.envs.pettingzoo.hunt import raw_env
+from gymnasium_stag_hunt.envs.pettingzoo.hunt import raw_env
 
 if __name__ == "__main__":
     def env_creator(args):
         return PettingZooEnv(raw_env(**args))
+
 
     tune.register_env("StagHunt-Hunt-PZ-v0", env_creator)
 
@@ -59,7 +61,7 @@ if __name__ == "__main__":
             # Environment specific
             "env": "StagHunt-Hunt-PZ-v0",
             # General
-            "num_workers": 2, 
+            "num_workers": 2,
             # Method specific
             "multiagent": {
                 "policies": {"player_0", "player_1"},

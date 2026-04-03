@@ -1,7 +1,7 @@
 from sys import stdout
-
-from gym import Env
-from gym.spaces import Discrete, Box
+from numpy import integer
+from gymnasium import Env
+from gymnasium.spaces import Discrete, Box
 from numpy.random import randint
 
 COOPERATE = 0
@@ -19,7 +19,7 @@ class SimpleEnv(Env):
     ):
         """
         :param cooperation_reward: How much reinforcement the agents get for catching the stag
-        :param defect_alone_reward: How much reinforcement an agent gets for defecting if the other one doesn't
+        :param defect_alone_reward: How much reinforcement an agent gets for defecting if the other one does not
         :param defect_together_reward: How much reinforcement an agent gets for defecting if the other one does also
         :param failed_cooperation_punishment: How much reinforcement the agents get for trying to catch a stag alone
         :param eps_per_game: How many games happen before the internal done flag is set to True. Only included for
@@ -49,12 +49,11 @@ class SimpleEnv(Env):
         self.done = False
         self.ep = 0
         self.final_ep = eps_per_game
-        self.seed()
 
         # Environment Config
         self.action_space = Discrete(2)  # cooperate or defect
         self.observation_space = Box(
-            low=0, high=1, shape=(2,), dtype=int
+            low=0, high=1, shape=(2,), dtype=integer
         )  # last agent actions
         self.reward_range = (failed_cooperation_punishment, cooperation_reward)
 
@@ -99,9 +98,9 @@ class SimpleEnv(Env):
 
         obs = (a_action, b_action)
 
-        return obs, reward, done, {}
+        return obs, reward, done, done, {}
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
         """
         Reset the game state
         """

@@ -1,10 +1,10 @@
 from time import sleep
 
-from gym_stag_hunt.envs.gym.escalation import EscalationEnv
-from gym_stag_hunt.envs.gym.harvest import HarvestEnv
-from gym_stag_hunt.envs.gym.hunt import HuntEnv
-from gym_stag_hunt.envs.gym.simple import SimpleEnv
-from gym_stag_hunt.src.games.abstract_grid_game import UP, LEFT, DOWN, RIGHT, STAND
+from gymnasium_stag_hunt.envs.gym.escalation import EscalationEnv
+from gymnasium_stag_hunt.envs.gym.harvest import HarvestEnv
+from gymnasium_stag_hunt.envs.gym.hunt import HuntEnv
+from gymnasium_stag_hunt.envs.gym.simple import SimpleEnv
+from gymnasium_stag_hunt.src.games.abstract_grid_game import UP, LEFT, DOWN, RIGHT, STAND
 
 ENVS = {
     "CLASSIC": SimpleEnv,
@@ -39,20 +39,23 @@ def manual_input():
     return i
 
 
-ENV = "ESCALATION"
+ENV = "HUNT"
+enable_multi = True
 
 if __name__ == "__main__":
-    env = ENVS[ENV](obs_type="image", enable_multiagent=True)
+    env = ENVS[ENV](obs_type="image", enable_multiagent=enable_multi)
     obs = env.reset()
     for i in range(10000):
-        actions = [env.action_space.sample(), env.action_space.sample()]
-
-        obs, rewards, done, info = env.step(actions=actions)
-        # print_ep(obs, rewards, done, info)
+        actions = [env.action_space.sample(), env.action_space.sample()] if enable_multi else env.action_space.sample()
+        obs, rewards, terminated, truncated, info = env.step(actions=actions)
+        print(rewards)
+        # print_ep(obs, rewards, terminated, truncated, info)
         sleep(0.4)
         if ENV == "CLASSIC":
-            env.render(rewards=rewards)
+            env.render()
         else:
             env.render(mode="human")
+        if terminated or truncated:
+            obs = env.reset()
     env.close()
     quit()

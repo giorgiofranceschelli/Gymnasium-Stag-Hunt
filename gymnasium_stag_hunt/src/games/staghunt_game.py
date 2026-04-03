@@ -1,8 +1,8 @@
 from numpy import zeros, uint8, array, hypot
 
-from gym_stag_hunt.src.games.abstract_grid_game import AbstractGridGame
+from gymnasium_stag_hunt.src.games.abstract_grid_game import AbstractGridGame
 
-from gym_stag_hunt.src.utils import (
+from gymnasium_stag_hunt.src.utils import (
     overlaps_entity,
     place_entity_in_unoccupied_cell,
     spawn_plants,
@@ -33,6 +33,8 @@ class StagHunt(AbstractGridGame):
         obs_type,
         load_renderer,
         enable_multiagent,
+        max_timesteps,
+        flip_obs
     ):
         """
         :param stag_reward: How much reinforcement the agents get for catching the stag
@@ -41,6 +43,8 @@ class StagHunt(AbstractGridGame):
         :param forage_quantity: How many plants will be placed on the board.
         :param forage_reward: How much reinforcement the agents get for harvesting a plant
         :param mauling_punishment: How much reinforcement the agents get for trying to catch a stag alone (MUST be neg.)
+        :param max_timesteps: Total number of timesteps per episode
+        :param flip_obs: Whether to invert agent positions when returning the second obs
         """
 
         super(StagHunt, self).__init__(
@@ -48,6 +52,8 @@ class StagHunt(AbstractGridGame):
             screen_size=screen_size,
             obs_type=obs_type,
             enable_multiagent=enable_multiagent,
+            max_timesteps=max_timesteps,
+            flip_obs=flip_obs
         )
 
         # Config
@@ -67,12 +73,13 @@ class StagHunt(AbstractGridGame):
         # Entity Positions
         self._stag_pos = zeros(2, dtype=uint8)
         self._plants_pos = []
+        self._timestep = 0
         self.reset_entities()  # place the entities on the grid
 
         # If rendering is enabled, we will instantiate the rendering pipeline
         if obs_type == "image" or load_renderer:
             # we don't want to import pygame if we aren't going to use it, so that's why this import is here
-            from gym_stag_hunt.src.renderers.hunt_renderer import HuntRenderer
+            from gymnasium_stag_hunt.src.renderers.hunt_renderer import HuntRenderer
 
             self._renderer = HuntRenderer(
                 game=self, window_title=window_title, screen_size=screen_size
@@ -173,6 +180,7 @@ class StagHunt(AbstractGridGame):
                         self._seek_entity(self.B_AGENT, self.STAG),
                     ]
                 )
+        self._timestep += 1
 
         # Get Rewards
         iteration_rewards = self._calc_reward()
@@ -202,19 +210,12 @@ class StagHunt(AbstractGridGame):
 
         obs = self.get_observation()
         info = {}
+        done = False if self._timestep < self._max_timesteps else True
 
         if self._enable_multiagent:
-            if self._obs_type == "coords":
-                return (
-                    (obs, self._flip_coord_observation_perspective(obs)),
-                    iteration_rewards,
-                    False,
-                    info,
-                )
-            else:
-                return (obs, obs), iteration_rewards, False, info
+            return obs, iteration_rewards, done, done, info
         else:
-            return obs, iteration_rewards[0], False, info
+            return obs, iteration_rewards[0], done, done, info
 
     def _coord_observation(self):
         """
@@ -277,6 +278,7 @@ class StagHunt(AbstractGridGame):
             how_many=self._forage_quantity,
             used_coordinates=self.AGENTS + [self.STAG],
         )
+        self._timestep = 0
 
     """
     Properties

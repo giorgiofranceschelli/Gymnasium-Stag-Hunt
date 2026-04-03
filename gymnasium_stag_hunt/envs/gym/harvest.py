@@ -1,9 +1,9 @@
-from gym.spaces import Discrete, Box
+from gymnasium.spaces import Discrete, Box
 from numpy import uint8
 
-from gym_stag_hunt.envs.gym.abstract_markov_staghunt import AbstractMarkovStagHuntEnv
-from gym_stag_hunt.src.entities import TILE_SIZE
-from gym_stag_hunt.src.games.harvest_game import Harvest
+from gymnasium_stag_hunt.envs.gym.abstract_markov_staghunt import AbstractMarkovStagHuntEnv
+from gymnasium_stag_hunt.src.entities import TILE_SIZE
+from gymnasium_stag_hunt.src.games.harvest_game import Harvest
 
 
 class HarvestEnv(AbstractMarkovStagHuntEnv):
@@ -12,18 +12,22 @@ class HarvestEnv(AbstractMarkovStagHuntEnv):
         grid_size=(5, 5),
         screen_size=(600, 600),
         obs_type="image",
-        enable_multiagent=False,
+        enable_multiagent=True,
         load_renderer=False,
         max_plants=4,
         chance_to_mature=0.1,
         chance_to_die=0.1,
         young_reward=1,
         mature_reward=2,
+        max_timesteps=1000,
+        flip_obs=True
     ):
         """
         :param grid_size: A (W, H) tuple corresponding to the grid dimensions. Although W=H is expected, W!=H works also
         :param screen_size: A (W, H) tuple corresponding to the pixel dimensions of the game window
         :param obs_type: Can be 'image' for pixel-array based observations, or 'coords' for just the entity coordinates
+        :param max_timesteps: The total number of timesteps per episode (default 1000)
+        :param flip_obs: Whether to invert agent positions when returning the second obs (default True)
         """
         if young_reward > mature_reward:
             raise AttributeError(
@@ -53,7 +57,7 @@ class HarvestEnv(AbstractMarkovStagHuntEnv):
         self.reward_range = (0, mature_reward)
 
         window_title = (
-            "OpenAI Gym - Harvest (%d x %d)" % grid_size
+            "Gymnasium - Harvest (%d x %d)" % grid_size
         )  # create game representation
         self.game = Harvest(
             window_title=window_title,
@@ -67,6 +71,8 @@ class HarvestEnv(AbstractMarkovStagHuntEnv):
             chance_to_die=chance_to_die,
             young_reward=young_reward,
             mature_reward=mature_reward,
+            max_timesteps=max_timesteps,
+            flip_obs=flip_obs
         )
 
         self.action_space = Discrete(5)  # up, down, left, right or stand
@@ -75,10 +81,10 @@ class HarvestEnv(AbstractMarkovStagHuntEnv):
             self.observation_space = Box(
                 0,
                 255,
-                shape=(grid_size[0] * TILE_SIZE, grid_size[1] * TILE_SIZE, 3),
+                shape=(2, grid_size[0] * TILE_SIZE, grid_size[1] * TILE_SIZE, 3),
                 dtype=uint8,
             )
         elif obs_type == "coords":
             self.observation_space = Box(
-                0, max(grid_size), shape=(4 + max_plants * 3,), dtype=uint8
+                0, max(grid_size), shape=(2, 4 + max_plants * 3,), dtype=uint8
             )

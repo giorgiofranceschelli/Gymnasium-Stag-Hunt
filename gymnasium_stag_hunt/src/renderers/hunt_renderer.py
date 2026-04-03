@@ -1,5 +1,5 @@
-from gym_stag_hunt.src.entities import Entity
-from gym_stag_hunt.src.renderers.abstract_renderer import AbstractRenderer
+from gymnasium_stag_hunt.src.entities import Entity
+from gymnasium_stag_hunt.src.renderers.abstract_renderer import AbstractRenderer
 
 
 class HuntRenderer(AbstractRenderer):

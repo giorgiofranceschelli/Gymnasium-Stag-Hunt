@@ -1,8 +1,8 @@
 from numpy import array
 from numpy.random import uniform
 
-from gym_stag_hunt.src.games.abstract_grid_game import AbstractGridGame
-from gym_stag_hunt.src.utils import overlaps_entity, spawn_plants, respawn_plants
+from gymnasium_stag_hunt.src.games.abstract_grid_game import AbstractGridGame
+from gymnasium_stag_hunt.src.utils import overlaps_entity, spawn_plants, respawn_plants
 
 # Entity Keys
 A_AGENT = 0
@@ -26,6 +26,8 @@ class Harvest(AbstractGridGame):
         obs_type,
         load_renderer,
         enable_multiagent,
+        max_timesteps,
+        flip_obs
     ):
         """
         :param max_plants: What is the maximum number of plants that can be on the board.
@@ -33,6 +35,8 @@ class Harvest(AbstractGridGame):
         :param chance_to_die: What chance does a mature plant have to die each time step.
         :param young_reward: Reward for harvesting a young plant (awarded to the harvester)
         :param mature_reward: Reward for harvesting a mature plant (awarded to both agents)
+        :param max_timesteps: Total number of timesteps per episode
+        :param flip_obs: Whether to invert agent positions when returning the second obs
         """
 
         super(Harvest, self).__init__(
@@ -40,6 +44,8 @@ class Harvest(AbstractGridGame):
             screen_size=screen_size,
             obs_type=obs_type,
             enable_multiagent=enable_multiagent,
+            max_timesteps=max_timesteps,
+            flip_obs=flip_obs
         )
 
         # Game Config
@@ -55,12 +61,13 @@ class Harvest(AbstractGridGame):
         # Entity Positions
         self._plants = []
         self._maturity_flags = [False] * max_plants
+        self._timestep = 0
         self.reset_entities()  # place the entities on the grid
 
         # If rendering is enabled, we will instantiate the rendering pipeline
         if obs_type == "image" or load_renderer:
             # we don't want to import pygame if we aren't going to use it, so that's why this import is here
-            from gym_stag_hunt.src.renderers.harvest_renderer import HarvestRenderer
+            from gymnasium_stag_hunt.src.renderers.harvest_renderer import HarvestRenderer
 
             self._renderer = HarvestRenderer(
                 game=self, window_title=window_title, screen_size=screen_size
@@ -128,6 +135,7 @@ class Harvest(AbstractGridGame):
             self._move_agents(
                 agent_moves=[agent_moves, self._random_move(self.B_AGENT)]
             )
+        self._timestep += 1
 
         for idx, plant in enumerate(self._plants):
             is_mature = self._maturity_flags[idx]
@@ -152,21 +160,13 @@ class Harvest(AbstractGridGame):
             self._tagged_plants = []
 
         obs = self.get_observation()
-        done = False
+        done = False if self._timestep < self._max_timesteps else True
         info = {}
 
         if self._enable_multiagent:
-            if self._obs_type == "coords":
-                return (
-                    (obs, self._flip_coord_observation_perspective(obs)),
-                    iteration_rewards,
-                    done,
-                    info,
-                )
-            else:
-                return (obs, obs), iteration_rewards, done, info
+            return obs, iteration_rewards, done, done, info
         else:
-            return obs, iteration_rewards[0], done, info
+            return obs, iteration_rewards[0], done, done, info
 
     def _coord_observation(self):
         """
@@ -198,6 +198,7 @@ class Harvest(AbstractGridGame):
             used_coordinates=self.AGENTS,
         )
         self._maturity_flags = [False] * self._max_plants
+        self._timestep = 0
 
     """
     Properties

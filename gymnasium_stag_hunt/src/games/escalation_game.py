@@ -1,8 +1,8 @@
 from numpy import zeros, uint8, array
 from numpy.random import randint
 
-from gym_stag_hunt.src.games.abstract_grid_game import AbstractGridGame
-from gym_stag_hunt.src.utils import overlaps_entity
+from gymnasium_stag_hunt.src.games.abstract_grid_game import AbstractGridGame
+from gymnasium_stag_hunt.src.utils import overlaps_entity
 
 """
 Entity Keys
@@ -24,9 +24,13 @@ class Escalation(AbstractGridGame):
         obs_type,
         load_renderer,
         enable_multiagent,
+        max_timesteps,
+        flip_obs
     ):
         """
         :param streak_break_punishment_factor: Negative reinforcement for breaking the streak
+        :param max_timesteps: Total number of timesteps per episode
+        :param flip_obs: Whether to invert agent positions when returning the second obs
         """
 
         super(Escalation, self).__init__(
@@ -34,6 +38,8 @@ class Escalation(AbstractGridGame):
             screen_size=screen_size,
             obs_type=obs_type,
             enable_multiagent=enable_multiagent,
+            max_timesteps=max_timesteps,
+            flip_obs=flip_obs
         )
 
         self._streak_break_punishment_factor = streak_break_punishment_factor
@@ -41,12 +47,13 @@ class Escalation(AbstractGridGame):
         self._mark = zeros(2, dtype=uint8)
         self._streak_active = False
         self._streak = 0
+        self._timestep = 0
         self.reset_entities()
 
         # If rendering is enabled, we will instantiate the rendering pipeline
         if obs_type == "image" or load_renderer:
             # we don't want to import pygame if we aren't going to use it, so that's why this import is here
-            from gym_stag_hunt.src.renderers.escalation_renderer import (
+            from gymnasium_stag_hunt.src.renderers.escalation_renderer import (
                 EscalationRenderer,
             )
 
@@ -105,23 +112,16 @@ class Escalation(AbstractGridGame):
                     ]
                 )
 
+        self._timestep += 1
         iteration_rewards = self._calc_reward()
         obs = self.get_observation()
         info = {}
-        done = False
+        done = False if self._timestep < self._max_timesteps else True
 
         if self._enable_multiagent:
-            if self._obs_type == "coords":
-                return (
-                    (obs, self._flip_coord_observation_perspective(obs)),
-                    iteration_rewards,
-                    done,
-                    info,
-                )
-            else:
-                return (obs, obs), iteration_rewards, done, info
+            return obs, iteration_rewards, done, done, info
         else:
-            return obs, iteration_rewards[0], done, info
+            return obs, iteration_rewards[0], done, done, info
 
     def _coord_observation(self):
         """
@@ -136,6 +136,7 @@ class Escalation(AbstractGridGame):
         """
         self._reset_agents()
         self.MARK = [randint(0, self.GRID_W - 1), randint(0, self.GRID_H - 1)]
+        self._timestep = 0
 
     """
     Properties

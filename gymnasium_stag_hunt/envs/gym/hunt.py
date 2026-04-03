@@ -1,9 +1,9 @@
-from gym.spaces import Discrete, Box
+from gymnasium.spaces import Discrete, Box
 from numpy import uint8
 
-from gym_stag_hunt.envs.gym.abstract_markov_staghunt import AbstractMarkovStagHuntEnv
-from gym_stag_hunt.src.entities import TILE_SIZE
-from gym_stag_hunt.src.games.staghunt_game import StagHunt
+from gymnasium_stag_hunt.envs.gym.abstract_markov_staghunt import AbstractMarkovStagHuntEnv
+from gymnasium_stag_hunt.src.entities import TILE_SIZE
+from gymnasium_stag_hunt.src.games.staghunt_game import StagHunt
 
 
 class HuntEnv(AbstractMarkovStagHuntEnv):
@@ -12,7 +12,7 @@ class HuntEnv(AbstractMarkovStagHuntEnv):
         grid_size=(5, 5),
         screen_size=(600, 600),
         obs_type="image",
-        enable_multiagent=False,
+        enable_multiagent=True,
         opponent_policy="random",
         load_renderer=False,
         stag_follows=True,
@@ -21,6 +21,8 @@ class HuntEnv(AbstractMarkovStagHuntEnv):
         stag_reward=5,
         forage_reward=1,
         mauling_punishment=-5,
+        max_timesteps=1000,
+        flip_obs=True
     ):
         """
         :param grid_size: A (W, H) tuple corresponding to the grid dimensions. Although W=H is expected, W!=H works also
@@ -32,6 +34,8 @@ class HuntEnv(AbstractMarkovStagHuntEnv):
         :param stag_reward: How much reinforcement the agents get for catching the stag
         :param forage_reward: How much reinforcement the agents get for harvesting a plant
         :param mauling_punishment: How much reinforcement the agents get for trying to catch a stag alone (MUST be neg.)
+        :param max_timesteps: The total number of timesteps per episode (default 1000)
+        :param flip_obs: Whether to invert agent positions when returning the second obs (default True)
         """
         if not (stag_reward > forage_reward >= 0 > mauling_punishment):
             raise AttributeError(
@@ -66,7 +70,7 @@ class HuntEnv(AbstractMarkovStagHuntEnv):
         self.reward_range = (mauling_punishment, stag_reward)
 
         window_title = (
-            "OpenAI Gym - Stag Hunt (%d x %d)" % grid_size
+            "Gymnasium - Stag Hunt (%d x %d)" % grid_size
         )  # create game representation
         self.game = StagHunt(
             window_title=window_title,
@@ -82,6 +86,8 @@ class HuntEnv(AbstractMarkovStagHuntEnv):
             forage_reward=forage_reward,
             mauling_punishment=mauling_punishment,
             opponent_policy=opponent_policy,
+            max_timesteps=max_timesteps,
+            flip_obs=flip_obs
         )
 
         self.action_space = Discrete(5)  # up, down, left, right or stand
@@ -90,10 +96,10 @@ class HuntEnv(AbstractMarkovStagHuntEnv):
             self.observation_space = Box(
                 0,
                 255,
-                shape=(grid_size[0] * TILE_SIZE, grid_size[1] * TILE_SIZE, 3),
+                shape=(2, grid_size[0] * TILE_SIZE, grid_size[1] * TILE_SIZE, 3),
                 dtype=uint8,
             )
         elif obs_type == "coords":
             self.observation_space = Box(
-                0, max(grid_size), shape=(6 + forage_quantity * 2,), dtype=uint8
+                0, max(grid_size), shape=(2, 6 + forage_quantity * 2,), dtype=uint8
             )

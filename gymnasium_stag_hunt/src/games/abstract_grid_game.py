@@ -1,6 +1,6 @@
 from abc import ABC
 
-from numpy import zeros, uint8, array
+from numpy import zeros, uint8, array, stack
 from numpy.random import choice
 
 # Possible Moves
@@ -12,12 +12,13 @@ STAND = 4
 
 
 class AbstractGridGame(ABC):
-    def __init__(self, grid_size, screen_size, obs_type, enable_multiagent):
+    def __init__(self, grid_size, screen_size, obs_type, enable_multiagent, max_timesteps, flip_obs):
         """
         :param grid_size: A (W, H) tuple corresponding to the grid dimensions. Although W=H is expected, W!=H works also
         :param screen_size: A (W, H) tuple corresponding to the pixel dimensions of the game window
         :param obs_type: Can be 'image' for pixel-array based observations, or 'coords' for just the entity coordinates
-        :param enable_multiagent: Boolean signifying if the env will be used to train multiple agents or one.
+        :param enable_multiagent: Boolean signifying if the env will be used to train multiple agents or one
+        :param flip_obs: Whether to invert agent positions when returning the second obs
         """
         if screen_size[0] * screen_size[1] == 0:
             raise AttributeError(
@@ -29,6 +30,8 @@ class AbstractGridGame(ABC):
         self._obs_type = obs_type  # record type of observation as attribute
         self._grid_size = grid_size  # record grid dimensions as attribute
         self._enable_multiagent = enable_multiagent
+        self._max_timesteps = max_timesteps
+        self._flip = flip_obs
 
         self._a_pos = zeros(
             2, dtype=uint8
@@ -41,20 +44,23 @@ class AbstractGridGame(ABC):
 
     def get_observation(self):
         """
-        :return: observation of the current game state
+        :return: observations of the current game state
         """
-        return (
-            self.RENDERER.update()
-            if self._obs_type == "image"
-            else self._coord_observation()
-        )
+        if self._obs_type == 'image':
+            obs = self.RENDERER.update()
+            return stack((obs, obs)) if self._enable_multiagent else obs
+        else:
+            obs = self._coord_observation()
+            return stack((obs, self._flip_coord_observation_perspective(obs) if self._flip else obs)) if self._enable_multiagent else obs
+
 
     def _coord_observation(self):
         return array(self.AGENTS)
 
+
     def _flip_coord_observation_perspective(self, a_obs):
         """
-        Transforms the default observation (which is "from the perspective of agent A" as it's coordinates are in the
+        Transforms the default observation (which is "from the perspective of agent A" as its coordinates are in the
         first index) into the "perspective of agent B" (by flipping the positions of the A and B coordinates in the
         observation array)
         :param a_obs: Original observation
@@ -152,10 +158,7 @@ class AbstractGridGame(ABC):
         :param pos: starting position
         :return: new position
         """
-        new_x = pos[0] - 1
-        if new_x == -1:
-            new_x = 0
-        return new_x, pos[1]
+        return pos[0] - 1 if pos[0] > 0 else 0, pos[1]
 
     def _move_right(self, pos):
         """
@@ -172,10 +175,7 @@ class AbstractGridGame(ABC):
         :param pos: starting position
         :return: new position
         """
-        new_y = pos[1] - 1
-        if new_y == -1:
-            new_y = 0
-        return pos[0], new_y
+        return pos[0], pos[1] - 1 if pos[1] > 0 else 0
 
     def _move_down(self, pos):
         """

@@ -1,7 +1,7 @@
 from itertools import product
 from pettingzoo.test import parallel_api_test
 
-from gym_stag_hunt.envs import (
+from gymnasium_stag_hunt.envs import (
     ZooHuntEnvironment,
     ZooHarvestEnvironment,
     ZooEscalationEnvironment,

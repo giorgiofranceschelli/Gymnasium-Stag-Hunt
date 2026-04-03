@@ -1,7 +1,7 @@
 import pygame as pg
 from numpy import rot90, flipud
 
-from gym_stag_hunt.src.entities import Entity, get_gui_window_icon
+from gymnasium_stag_hunt.src.entities import Entity, get_gui_window_icon
 
 """
 Constants

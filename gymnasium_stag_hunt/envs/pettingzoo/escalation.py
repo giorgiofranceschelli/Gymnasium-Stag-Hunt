@@ -1,6 +1,6 @@
-from gym_stag_hunt.envs.gym.escalation import EscalationEnv
-from gym_stag_hunt.envs.pettingzoo.shared import PettingZooEnv
-from pettingzoo.utils import parallel_to_aec
+from gymnasium_stag_hunt.envs.gym.escalation import EscalationEnv
+from gymnasium_stag_hunt.envs.pettingzoo.shared import PettingZooEnv
+from pettingzoo.utils.conversions import parallel_to_aec
 
 
 def env(**kwargs):
