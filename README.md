@@ -1,3 +1,10 @@
+# Gymnasium Stag Hunt
+
+DISCLAIMER: This repository is a fork of the original Gym-Stag-Hunt to update it to the most recent versions of the used libraries (e.g., Numpy) and to migrate from Gym to Gymnasium. This should facilitate the adoption, removing the need for specific, older packages.
+
+What follows is the original Readme, preserved so you can get the full context of the original repo and research behind it. Some of the reported arguments have been renamed (e.g., episodes_per_game has become max_timesteps) and others have changed a little bit, so I suggest you to check the actual code in case of doubts.
+
+
 # Gym Stag Hunt
 
 This project is an implementation of various Stag Hunt-like environments for Open AI Gym and PettingZoo. Besides the simple matrix form Stag Hunt, the repository includes 3 different multi-agent grid-based stochastic games as described in this [paper](https://arxiv.org/abs/1709.02865). The core goal of the project is to offer a robust, efficient, and customizable environment for exploring prosocial behavior in multi-agent reinforcement learning. Feedback and requests for features are welcome.
